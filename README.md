@@ -61,6 +61,11 @@ python main.py
 - L’environnement de référence est un workspace VSCode sous Linux avec
   l’environnement Python `.venv`.
 - Éviter de modifier l’architecture ou les outils sans besoin concret observé.
+- Les affichages de débogage doivent passer par `logging.debug()` plutôt que par
+  des `print()` permanents dans la boucle du jeu.
+- Les sons sont chargés dans `Jeu`, puis transmis aux objets qui en ont besoin,
+  afin d’éviter que les classes de jeu connaissent directement les fichiers
+  `.wav`.
 
 ## Pièges et solutions de contournement
 

@@ -1,3 +1,4 @@
+import logging
 import sys
 import pygame
 from raquette import Raquette
@@ -8,8 +9,10 @@ class Jeu:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
+        logging.basicConfig(level=logging.INFO)
 
         self.initialiser_configuration()
+        self.initialiser_etat_partie()
 
         # Création de la fenêtre de jeu. 
         self.fenetre = pygame.display.set_mode(
@@ -18,6 +21,7 @@ class Jeu:
         )
         pygame.display.set_caption(self.titre_fenetre)
 
+        self.charger_sons()
         self.creer_objets()
 
     def initialiser_configuration(self):
@@ -37,17 +41,30 @@ class Jeu:
         self.epaisseur_ligne_centrale = 2
         self.hauteur_pointille = 18
         self.espace_pointille = 14
-        self.score_joueur = 0
-        self.score_ordinateur = 0        
         self.horloge = pygame.time.Clock()
-        self.en_cours = True
         self.police_score = pygame.font.SysFont(None, 72)
         self.police_message = pygame.font.SysFont(None, 24)
         self.score_gagnant = 3
-        self.gagnant = None
         self.vitesse_balle_initiale = 5
         self.vitesse_balle_maximale = 10
         self.increment_vitesse_balle = 0.2
+
+    def initialiser_etat_partie(self):
+        """Initialise l'état courant de la partie."""
+
+        self.score_joueur = 0
+        self.score_ordinateur = 0
+        self.gagnant = None
+        self.en_cours = True
+
+    def charger_sons(self):
+        """Charge les sons utilisés par le jeu."""
+
+        self.sons_balle = {
+            "rebond_raquette": pygame.mixer.Sound("rebond_raquette.wav"),
+            "rebond_mur": pygame.mixer.Sound("rebond_mur.wav"),
+            "perdue": pygame.mixer.Sound("perdue.wav"),
+        }
 
     def creer_objets(self):
         """Création des objets du jeu."""
@@ -81,6 +98,7 @@ class Jeu:
             self.vitesse_balle_maximale,
             self.largeur_fenetre,
             self.hauteur_fenetre,
+            self.sons_balle,
         )
 
         self.balle.reinitialiser_position(Cote.GAUCHE)
@@ -141,10 +159,16 @@ class Jeu:
     def gerer_collisions(self):
         """Gère l'ensemble des collisions."""   
         
-        if self.balle.rect.colliderect(self.raquette_joueur.rect):
+        if (
+            self.balle.vitesse_x < 0
+            and self.balle.rect.colliderect(self.raquette_joueur.rect)
+        ):
             self.balle.rebondir_sur_raquette(self.raquette_joueur)
 
-        if self.balle.rect.colliderect(self.raquette_ordinateur.rect):
+        if (
+            self.balle.vitesse_x > 0
+            and self.balle.rect.colliderect(self.raquette_ordinateur.rect)
+        ):
             self.balle.rebondir_sur_raquette(self.raquette_ordinateur)
 
     def mettre_a_jour_ia_ordinateur(self):
@@ -288,9 +312,7 @@ class Jeu:
     def reinitialiser_partie(self):
         """Redémarre une nouvelle partie."""
 
-        self.score_joueur = 0
-        self.score_ordinateur = 0
-        self.gagnant = None
+        self.initialiser_etat_partie()
         self.balle.reinitialiser_position(Cote.GAUCHE)
 
     def executer(self):

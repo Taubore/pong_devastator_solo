@@ -1,6 +1,9 @@
+import logging
 import pygame
 import random
 from commun import Cote
+
+logger = logging.getLogger(__name__)
 
 
 class Balle:
@@ -17,6 +20,7 @@ class Balle:
                  vitesse_x_maximale,
                  largeur_fenetre,
                  hauteur_fenetre,
+                 sons,
     ):
         # On stocke la position en flottant pour préparer des déplacements
         # plus fins que le simple pixel par pixel.
@@ -33,9 +37,7 @@ class Balle:
         self.limite_bas = hauteur_fenetre
         self.en_attente_mise_au_jeu = True
         self.cote_mise_au_jeu = Cote.GAUCHE
-        self.son_rebond_raquette = pygame.mixer.Sound("rebond_raquette.wav")
-        self.son_rebond_mur = pygame.mixer.Sound("rebond_mur.wav")
-        self.son_perdue = pygame.mixer.Sound("perdue.wav")
+        self.sons = sons
 
     def lancer_mise_au_jeu(self):
         """Autorise la balle à partir."""
@@ -58,20 +60,20 @@ class Balle:
         if self.y - self.rayon <= 0:
             self.y = self.rayon
             self.vitesse_y = -self.vitesse_y
-            self.son_rebond_mur.play()
+            self.sons["rebond_mur"].play()
 
         elif self.y + self.rayon >= self.limite_bas:
             self.y = self.limite_bas - self.rayon
             self.vitesse_y = -self.vitesse_y
-            self.son_rebond_mur.play()
+            self.sons["rebond_mur"].play()
 
         # Si toute la balle a quitté l'écran par un côté, on signale quel joueur a 
         # perdu l'échange. Le jeu décidera du pointage et de la remise en jeu.
         if self.x + self.rayon < 0:
-            self.son_perdue.play()
+            self.sons["perdue"].play()
             return Cote.GAUCHE
         elif self.x - self.rayon > self.limite_droite:
-            self.son_perdue.play()
+            self.sons["perdue"].play()
             return Cote.DROITE
         
         return None  # Pas de sortie d'écran
@@ -104,7 +106,7 @@ class Balle:
     def rebondir_sur_raquette(self, raquette):
         """Fait rebondir la balle sur une raquette donnée."""
  
-        self.son_rebond_raquette.play()
+        self.sons["rebond_raquette"].play()
 
         # Recalage sur la face touchée, selon le sens d'arrivée de la balle.
         if self.vitesse_x < 0:
@@ -124,8 +126,11 @@ class Balle:
         self.vitesse_y = ecart_centre // 10 + mouvement_raquette
         self.vitesse_y = max(-8, min(8, self.vitesse_y))
 
-        print(f"Rebond sur raquette: vitesse_x={self.vitesse_x:>.1f}, \
-              vitesse_y={self.vitesse_y}")
+        logger.debug(
+            "Rebond sur raquette : vitesse_x=%.1f, vitesse_y=%s",
+            self.vitesse_x,
+            self.vitesse_y,
+        )
 
     def dessiner(self, surface):
         """Dessine la balle dans la fenêtre."""
