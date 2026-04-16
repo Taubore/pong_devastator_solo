@@ -68,3 +68,9 @@ python main.py
   cohérent avec l’environnement du projet.
 - Lancer le jeu depuis l’environnement virtuel `.venv` afin d’éviter les écarts
   entre les dépendances globales et celles du projet.
+- Lors d’un rebond sur une raquette, recaler la balle selon son sens d’arrivée
+  horizontal plutôt que selon sa position après collision. La balle peut déjà
+  être entrée dans le rectangle de la raquette au moment du test.
+- Utiliser `IntEnum` pour les côtés du terrain quand la valeur doit aussi servir
+  de direction numérique (`-1` ou `1`). Un `Enum` classique demande `.value`
+  pour être utilisé dans un calcul.
