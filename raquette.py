@@ -4,12 +4,22 @@ import pygame
 class Raquette:
     """Représente une raquette du jeu."""
 
-    def __init__(self, x, y, largeur, hauteur, couleur, vitesse, hauteur_fenetre):
+    def __init__(self,
+                 x,
+                 y,
+                 largeur,
+                 hauteur,
+                 couleur,
+                 vitesse,
+                 hauteur_fenetre,
+                 image = None
+        ):
         self.rect = pygame.Rect(x, y, largeur, hauteur)
         self.couleur = couleur
         self.vitesse = vitesse
         self.limite_bas = hauteur_fenetre
         self.pos_y_avant_deplacement = self.rect.y
+        self.image = image
 
     def deplacer(self, direction):
         """Déplace la raquette -1, 0 ou 1."""
@@ -24,4 +34,8 @@ class Raquette:
 
     def dessiner(self, surface):
         """Dessine la raquette dans la fenêtre."""
-        pygame.draw.rect(surface, self.couleur, self.rect, border_radius=4)
+
+        if self.image is not None:
+            surface.blit(self.image, self.rect)
+        else:
+            pygame.draw.rect(surface, self.couleur, self.rect, border_radius=4)

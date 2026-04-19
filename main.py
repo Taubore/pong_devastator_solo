@@ -22,6 +22,7 @@ class Jeu:
         pygame.display.set_caption(self.titre_fenetre)
 
         self.charger_sons()
+        self.charger_images()
         self.creer_objets()
 
     def initialiser_configuration(self):
@@ -29,16 +30,16 @@ class Jeu:
         """
         # Look rétro tout en visant un format d’écran moderne : 854x480 
         # Résolution la plus courante pour des jeux 2D modernes : 1280x720
-        self.largeur_fenetre = 800
-        self.hauteur_fenetre = 600
+        self.largeur_fenetre = 1280
+        self.hauteur_fenetre = 720
 
         self.titre_fenetre = "Pong Devastator solo"
-        self.couleur_fond = (0, 60, 0)
+        self.couleur_fond = (167, 180, 255)
         self.couleur_raquette = (255, 255, 255)
         self.couleur_balle = (255, 255, 255)
         self.couleur_texte = (255, 255, 255)
         self.fps = 60
-        self.epaisseur_ligne_centrale = 2
+        self.epaisseur_ligne_centrale = 5
         self.hauteur_pointille = 18
         self.espace_pointille = 14
         self.horloge = pygame.time.Clock()
@@ -61,9 +62,17 @@ class Jeu:
         """Charge les sons utilisés par le jeu."""
 
         self.sons_balle = {
-            "rebond_raquette": pygame.mixer.Sound("rebond_raquette.wav"),
-            "rebond_mur": pygame.mixer.Sound("rebond_mur.wav"),
-            "perdue": pygame.mixer.Sound("perdue.wav"),
+            "rebond_raquette": pygame.mixer.Sound("assets/sons/rebond_raquette.wav"),
+            "rebond_mur": pygame.mixer.Sound("assets/sons/rebond_mur.wav"),
+            "perdue": pygame.mixer.Sound("assets/sons/perdue.wav"),
+        }
+
+    def charger_images(self):
+        """Charge les images utilisées par le jeu."""
+        self.images = {
+            "balle": pygame.image.load("assets/images/balle.png").convert_alpha(),
+            "raquette_gauche": pygame.image.load("assets/images/raquette1.png").convert_alpha(),
+            "raquette_droite": pygame.image.load("assets/images/raquette2.png").convert_alpha(),
         }
 
     def creer_objets(self):
@@ -72,25 +81,27 @@ class Jeu:
         self.raquette_joueur = Raquette(
             50,
             self.hauteur_fenetre // 2 - 50,
-            10,
-            100,
+            20,
+            140,
             self.couleur_raquette,
             5,
             self.hauteur_fenetre,
+            self.images["raquette_gauche"],
         )
         self.raquette_ordinateur = Raquette(
             self.largeur_fenetre - 60,
             self.hauteur_fenetre // 2 - 50,
-            10,
-            100,
+            20,
+            140,
             self.couleur_raquette,
             4,
             self.hauteur_fenetre,
+            self.images["raquette_droite"],
         )
         self.balle = Balle(
             self.largeur_fenetre // 2,
             self.hauteur_fenetre // 2,
-            10,
+            16,
             self.couleur_balle,
             self.vitesse_balle_initiale,
             self.vitesse_balle_initiale,
@@ -99,6 +110,7 @@ class Jeu:
             self.largeur_fenetre,
             self.hauteur_fenetre,
             self.sons_balle,
+            self.images["balle"],
         )
 
         self.balle.reinitialiser_position(Cote.GAUCHE)

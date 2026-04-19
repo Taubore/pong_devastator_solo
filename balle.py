@@ -21,7 +21,8 @@ class Balle:
                  largeur_fenetre,
                  hauteur_fenetre,
                  sons,
-    ):
+                 image = None
+        ):
         # On stocke la position en flottant pour préparer des déplacements
         # plus fins que le simple pixel par pixel.
         self.x = float(x)
@@ -38,6 +39,7 @@ class Balle:
         self.en_attente_mise_au_jeu = True
         self.cote_mise_au_jeu = Cote.GAUCHE
         self.sons = sons
+        self.image = image
 
     def lancer_mise_au_jeu(self):
         """Autorise la balle à partir."""
@@ -135,8 +137,12 @@ class Balle:
     def dessiner(self, surface):
         """Dessine la balle dans la fenêtre."""
  
-        pygame.draw.circle(
-            surface,
-            self.couleur,
-            (int(self.x), int(self.y)),
-            self.rayon)
+        if self.image is not None:
+            rect_image = self.image.get_rect(center=(int(self.x), int(self.y)))
+            surface.blit(self.image, rect_image)
+        else:
+            pygame.draw.circle(
+                surface,
+                self.couleur,
+                (int(self.x), int(self.y)),
+                self.rayon)
