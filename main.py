@@ -51,8 +51,8 @@ class Jeu:
         self.police_message = pygame.font.SysFont(None, 24)
         self.score_gagnant = 3
         self.vitesse_balle_initiale = 5
-        self.vitesse_balle_maximale = 10
-        self.increment_vitesse_balle = 0.2
+        self.vitesse_balle_maximale = 11
+        self.increment_vitesse_balle = 0.35
         self.marge_ia = 10
         self.erreur_ia_maximale = 35
 
@@ -117,7 +117,6 @@ class Jeu:
             16,
             self.couleur_balle,
             self.vitesse_balle_initiale,
-            self.vitesse_balle_initiale,
             self.increment_vitesse_balle,
             self.vitesse_balle_maximale,
             self.largeur_fenetre,
@@ -131,14 +130,12 @@ class Jeu:
     def gerer_collisions(self):
         """Gère l'ensemble des collisions."""   
         
-        if (
-            self.balle.vitesse_x < 0
+        if (self.balle.direction_x < 0
             and self.balle.rect.colliderect(self.raquette_joueur.rect)
         ):
             self.balle.rebondir_sur_raquette(self.raquette_joueur)
 
-        if (
-            self.balle.vitesse_x > 0
+        if (self.balle.direction_x > 0
             and self.balle.rect.colliderect(self.raquette_ordinateur.rect)
         ):
             self.balle.rebondir_sur_raquette(self.raquette_ordinateur)
@@ -152,7 +149,7 @@ class Jeu:
         y_cible = self.balle.y + self.erreur_ia
 
         # Si la balle se dirige vers l'ordinateur, on la suit.
-        if self.balle.vitesse_x > 0:
+        if self.balle.direction_x > 0:
             if y_cible < self.raquette_ordinateur.rect.centery - marge:
                 direction_ordinateur = -1
             elif y_cible > self.raquette_ordinateur.rect.centery + marge:
