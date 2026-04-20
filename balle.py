@@ -33,13 +33,16 @@ class Balle:
         self.vitesse_y = vitesse_y
         self.vitesse_x_initiale = abs(vitesse_x)
         self.increment_vitesse_balle = increment_vitesse_balle
-        self.vitesse_x_maximale = vitesse_x_maximale
         self.limite_droite = largeur_fenetre
         self.limite_bas = hauteur_fenetre
         self.en_attente_mise_au_jeu = True
         self.cote_mise_au_jeu = Cote.GAUCHE
         self.sons = sons
         self.image = image
+        self.facteur_angle_rebond = 12
+        self.influence_mouvement_raquette = 0.5
+        self.vitesse_x_maximale = vitesse_x_maximale
+        self.vitesse_y_maximale = 8
 
     def deplacer(self):
         """Déplace la balle selon sa vitesse."""
@@ -114,10 +117,26 @@ class Balle:
         self.vitesse_x = -self.vitesse_x
 
         ecart_centre = self.y - raquette.rect.centery
-        mouvement_raquette = raquette.rect.y - raquette.pos_y_avant_deplacement
+        mouvement_raquette = (
+            raquette.rect.y - raquette.pos_y_avant_deplacement
+        )
 
-        self.vitesse_y = ecart_centre // 10 + mouvement_raquette
-        self.vitesse_y = max(-8, min(8, self.vitesse_y))
+        # Plus la balle touche loin du centre de la raquette, plus l'angle
+        # vertical du rebond devient marqué.
+        vitesse_y_selon_impact = ecart_centre / self.facteur_angle_rebond
+
+        # Le mouvement de la raquette ajoute une petite influence contrôlée.
+        vitesse_y_selon_raquette = (
+            mouvement_raquette * self.influence_mouvement_raquette
+        )
+
+        self.vitesse_y = vitesse_y_selon_impact + vitesse_y_selon_raquette
+
+        # On limite l'angle pour éviter une balle presque verticale.
+        self.vitesse_y = max(
+            -self.vitesse_y_maximale,
+            min(self.vitesse_y_maximale, self.vitesse_y),
+        )
 
         logger.debug(
             "Rebond sur raquette : vitesse_x=%.1f, vitesse_y=%s",
