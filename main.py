@@ -177,19 +177,21 @@ class Jeu:
 
         self.fenetre.fill(self.couleur_fond)
 
-        # Dessin de la ligne centrale en pointillés
-        for y in range(
-            0,
-            self.hauteur_fenetre,
-            self.hauteur_pointille + self.espace_pointille
-        ):
-            pygame.draw.line(
-                self.fenetre,
-                self.couleur_texte,
-                (self.largeur_fenetre // 2, y),
-                (self.largeur_fenetre // 2, y + self.hauteur_pointille),
-                self.epaisseur_ligne_centrale,
-            )
+        # Dessin de la ligne centrale en pointillés lorsque le jeu est en jeu ou en 
+        # mise en service.
+        if self.etat_jeu == EtatJeu.EN_JEU or self.etat_jeu == EtatJeu.MISE_AU_JEU:
+            for y in range(
+                0,
+                self.hauteur_fenetre,
+                self.hauteur_pointille + self.espace_pointille
+            ):
+                pygame.draw.line(
+                    self.fenetre,
+                    self.couleur_texte,
+                    (self.largeur_fenetre // 2, y),
+                    (self.largeur_fenetre // 2, y + self.hauteur_pointille),
+                    self.epaisseur_ligne_centrale,
+                )
 
     def dessiner_ecran_titre(self):
         """Dessine l'écran titre du jeu."""
@@ -251,6 +253,7 @@ class Jeu:
                 "Appuyez sur ESPACE pour mettre la balle au jeu",
                 self.anticrenelage_texte,
                 self.couleur_texte,
+                self.couleur_fond,
             )
             self.fenetre.blit(
                 texte_mise_au_jeu, 
@@ -289,18 +292,47 @@ class Jeu:
             self.fenetre.blit(texte_sens_mise_au_jeu, rect_sens_mise_au_jeu)
 
         if self.etat_jeu == EtatJeu.PARTIE_TERMINEE:
-            texte_gagnant = self.police_score.render(
-                "Joueur gagne!" if self.gagnant == Cote.GAUCHE else "Ordinateur gagne!",
-                self.anticrenelage_texte,
-                self.couleur_texte,
+            message_gagnant = (
+                "Joueur gagne!"
+                if self.gagnant == Cote.GAUCHE
+                else "Ordinateur gagne!"
             )
+
+            texte_gagnant = self.police_score.render(
+                message_gagnant,
+                True,
+                self.couleur_texte,
+                self.couleur_fond,
+            )
+
+            texte_rejouer = self.police_message.render(
+                "ESPACE : rejouer    ESC : quitter",
+                True,
+                self.couleur_texte,
+                self.couleur_fond,
+            )
+
             self.fenetre.blit(
                 texte_gagnant,
                 texte_gagnant.get_rect(
-                    center=(self.largeur_fenetre // 2, 
-                            self.hauteur_fenetre // 2)
-                    ),
+                    center=(
+                        self.largeur_fenetre // 2,
+                        self.hauteur_fenetre // 2 - 50,
+                    )
+                ),
             )
+
+            self.fenetre.blit(
+                texte_rejouer,
+                texte_rejouer.get_rect(
+                    center=(
+                        self.largeur_fenetre // 2,
+                        self.hauteur_fenetre // 2 + 10,
+                    )
+                ),
+            )
+
+
 
     def traiter_point_marque(self, sortie_ecran):
         """Met à jour le score après une sortie de la balle."""

@@ -2,86 +2,62 @@
 
 Mini-projet d’apprentissage de Python avec `pygame-ce`.
 
-L’objectif est de construire progressivement un Pong solo très simple, inspiré de
-*Code the Classics* volume 1, en gardant un code lisible, pédagogique et facile à
-tester.
+Le programme est un Pong solo simple : le joueur contrôle la raquette de gauche,
+l’ordinateur contrôle celle de droite, et le premier à `3` points gagne.
 
-## Fonctionnalités actuelles
-
-- Ouverture d’une fenêtre Pygame.
-- Fermeture propre avec la croix de la fenêtre ou la touche `Échap`.
-- Affichage de deux raquettes, d’une balle, d’un score et d’une ligne centrale
-  pointillée.
-- Lancement de la balle avec la touche `Espace`.
-- Déplacement de la raquette du joueur avec les flèches `Haut` et `Bas`.
-- Détection simple des collisions avec les murs et les raquettes.
-- Comptage du score quand la balle sort à gauche ou à droite.
-
-## Prérequis
-
-- Linux
-- Python `3.12.3`
-- `pygame-ce`
-- VSCode avec le profil `Python_PyGame_CE` recommandé
-
-## Installation
-
-Créer puis activer l’environnement virtuel :
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Installer la dépendance principale :
-
-```bash
-python -m pip install pygame-ce
-```
-
-## Lancement
+## Lancement rapide
 
 Depuis la racine du projet :
 
 ```bash
+source .venv/bin/activate
 python main.py
+```
+
+Si l’environnement virtuel n’existe pas encore :
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install pygame-ce
 ```
 
 ## Contrôles
 
-- `Espace` : lancer la balle.
+- `Espace` : démarrer depuis l’écran titre, lancer la balle ou recommencer après
+  une partie terminée.
 - `Haut` : monter la raquette du joueur.
 - `Bas` : descendre la raquette du joueur.
 - `Échap` : quitter le jeu.
 
-## Notes de développement
+## Organisation du code
 
-- Le projet est volontairement simple et travaille principalement dans `main.py`.
-- Les changements doivent rester petits, progressifs et faciles à relire.
-- L’environnement de référence est un workspace VSCode sous Linux avec
-  l’environnement Python `.venv`.
-- Éviter de modifier l’architecture ou les outils sans besoin concret observé.
-- Les affichages de débogage doivent passer par `logging.debug()` plutôt que par
-  des `print()` permanents dans la boucle du jeu.
-- Les sons sont chargés dans `Jeu`, puis transmis aux objets qui en ont besoin,
-  afin d’éviter que les classes de jeu connaissent directement les fichiers
-  `.wav`.
+- `main.py` : boucle principale, états du jeu, affichage, événements, score et
+  collisions.
+- `configuration.py` : réglages principaux du jeu.
+- `balle.py` : déplacement, rebonds, accélération et rendu de la balle.
+- `raquette.py` : déplacement et rendu des raquettes.
+- `commun.py` : énumérations partagées (`Cote`, `EtatJeu`).
+- `assets/` : images et sons utilisés par le jeu.
 
-## Pièges et solutions de contournement
+## Points d’attention
 
-- Utiliser `pygame-ce` plutôt que le paquet historique `pygame` pour rester
-  cohérent avec l’environnement du projet.
-- Lancer le jeu depuis l’environnement virtuel `.venv` afin d’éviter les écarts
-  entre les dépendances globales et celles du projet.
-- Lors d’un rebond sur une raquette, recaler la balle selon son sens d’arrivée
-  horizontal plutôt que selon sa position après collision. La balle peut déjà
-  être entrée dans le rectangle de la raquette au moment du test.
-- Utiliser `IntEnum` pour les côtés du terrain quand la valeur doit aussi servir
-  de direction numérique (`-1` ou `1`). Un `Enum` classique demande `.value`
-  pour être utilisé dans un calcul.
-- Borner l’angle vertical de la balle avant de normaliser sa direction. Sinon,
-  une valeur verticale trop forte réduit trop le déplacement horizontal et donne
-  une impression de balle flottante.
-- Utiliser une police monospace en gras avec anticrénelage et sans couleur de
-  fond passée à `render()`. Cela garde le texte plus propre en mode
-  `pygame.SCALED` sans créer de contour gris trop visible.
+- Utiliser `pygame-ce`, pas le vieux paquet `pygame`.
+- Lancer le projet avec l’environnement `.venv` pour éviter les écarts de
+  dépendances.
+- `Cote` est un `IntEnum`, car ses valeurs servent aussi de directions
+  numériques (`-1` et `1`).
+- La balle stocke sa position en `float`, puis son rectangle est recalculé pour
+  les collisions.
+- Après un rebond sur une raquette, la direction de la balle est normalisée.
+  L’angle vertical est borné avant cette normalisation pour éviter une balle trop
+  verticale ou flottante.
+- Le texte utilise une police monospace en gras avec anticrénelage, sans couleur
+  de fond passée à `render()`, afin de limiter les contours gris en mode
+  `pygame.SCALED`.
+
+## Vérification rapide
+
+```bash
+.venv/bin/python -m py_compile main.py balle.py commun.py raquette.py configuration.py
+```
