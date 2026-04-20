@@ -1,6 +1,7 @@
 import logging
 import sys
 import pygame
+import random
 from raquette import Raquette
 from balle import Balle
 from commun import Cote, EtatJeu
@@ -20,6 +21,9 @@ class Jeu:
             pygame.FULLSCREEN | pygame.SCALED,
         )
         pygame.display.set_caption(self.titre_fenetre)
+
+        # On cache le curseur de la souris
+        pygame.mouse.set_visible(False)
 
         self.charger_sons()
         self.charger_images()
@@ -49,6 +53,8 @@ class Jeu:
         self.vitesse_balle_initiale = 5
         self.vitesse_balle_maximale = 10
         self.increment_vitesse_balle = 0.2
+        self.marge_ia = 10
+        self.erreur_ia_maximale = 35
 
     def initialiser_etat_partie(self):
         """Initialise l'état courant de la partie."""
@@ -56,6 +62,7 @@ class Jeu:
         self.score_joueur = 0
         self.score_ordinateur = 0
         self.gagnant = None
+        self.erreur_ia = 0
         self.etat_jeu = EtatJeu.MISE_AU_JEU
 
     def reinitialiser_partie(self):
@@ -140,14 +147,15 @@ class Jeu:
         """Déplace simplement la raquette ordinateur vers la balle."""
         
         direction_ordinateur = 0
-        marge = 8
+        marge = self.marge_ia
         centre_cible = self.hauteur_fenetre // 2
+        y_cible = self.balle.y + self.erreur_ia
 
         # Si la balle se dirige vers l'ordinateur, on la suit.
         if self.balle.vitesse_x > 0:
-            if self.balle.y < self.raquette_ordinateur.rect.centery - marge:
+            if y_cible < self.raquette_ordinateur.rect.centery - marge:
                 direction_ordinateur = -1
-            elif self.balle.y > self.raquette_ordinateur.rect.centery + marge:
+            elif y_cible > self.raquette_ordinateur.rect.centery + marge:
                 direction_ordinateur = 1
 
         # Sinon, on revient doucement vers le centre pour se replacer.
@@ -280,6 +288,13 @@ class Jeu:
                 self.etat_jeu = EtatJeu.PARTIE_TERMINEE
                 return
         
+        # On ajoute une erreur aléatoire à l'IA pour éviter qu'elle soit imbattable, 
+        # surtout à la longue.
+        self.erreur_ia = random.randint(  #AJOUT
+            -self.erreur_ia_maximale,
+            self.erreur_ia_maximale,
+        )
+
         self.balle.reinitialiser_position(sortie_ecran)
         self.etat_jeu = EtatJeu.MISE_AU_JEU
 
@@ -354,7 +369,8 @@ class Jeu:
 
     def fermer(self):
         """Fermeture propre de Pygame"""
-
+        
+        pygame.mouse.set_visible(True)
         pygame.quit()
         sys.exit()
 
