@@ -43,6 +43,7 @@ class Balle:
         self.image = image
         self.facteur_angle_rebond = 12
         self.influence_mouvement_raquette = 0.2
+        self.angle_vertical_maximal = 0.75
 
     def deplacer(self):
         """Déplace la balle selon sa vitesse."""
@@ -146,7 +147,10 @@ class Balle:
         )
         
         self.direction_y = (vitesse_y_selon_impact + vitesse_y_selon_raquette)
-        self.direction_y = max(-0.9, min(0.9, self.direction_y))
+        self.direction_y = max(
+            -self.angle_vertical_maximal,
+            min(self.angle_vertical_maximal, self.direction_y),
+        )
 
         self.normaliser_direction() 
 

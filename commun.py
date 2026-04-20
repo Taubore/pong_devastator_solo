@@ -5,6 +5,7 @@ class Cote(IntEnum):
     DROITE = 1 
 
 class EtatJeu(Enum):
+    ECRAN_TITRE = auto()
     MISE_AU_JEU = auto()
     EN_JEU = auto()
     PARTIE_TERMINEE = auto()

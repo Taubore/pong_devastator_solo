@@ -79,3 +79,9 @@ python main.py
 - Utiliser `IntEnum` pour les côtés du terrain quand la valeur doit aussi servir
   de direction numérique (`-1` ou `1`). Un `Enum` classique demande `.value`
   pour être utilisé dans un calcul.
+- Borner l’angle vertical de la balle avant de normaliser sa direction. Sinon,
+  une valeur verticale trop forte réduit trop le déplacement horizontal et donne
+  une impression de balle flottante.
+- Utiliser une police monospace en gras avec anticrénelage et sans couleur de
+  fond passée à `render()`. Cela garde le texte plus propre en mode
+  `pygame.SCALED` sans créer de contour gris trop visible.

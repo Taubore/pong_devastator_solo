@@ -5,6 +5,7 @@ import random
 from raquette import Raquette
 from balle import Balle
 from commun import Cote, EtatJeu
+from configuration import ConfigurationJeu
 
 class Jeu:
     def __init__(self):
@@ -12,6 +13,7 @@ class Jeu:
         pygame.mixer.init()
         logging.basicConfig(level=logging.INFO)
 
+        self.configuration = ConfigurationJeu()
         self.initialiser_configuration()
         self.initialiser_etat_partie()
 
@@ -32,29 +34,34 @@ class Jeu:
     def initialiser_configuration(self):
         """Initialise les configurations principales du jeu.
         """
-        # Look rétro tout en visant un format d’écran moderne : 854x480 
-        # Résolution la plus courante pour des jeux 2D modernes : 1280x720
-        self.largeur_fenetre = 1280
-        self.hauteur_fenetre = 720
+        self.largeur_fenetre = self.configuration.largeur_fenetre
+        self.hauteur_fenetre = self.configuration.hauteur_fenetre
+        self.titre_fenetre = self.configuration.titre_fenetre
+        
+        self.couleur_fond = self.configuration.couleur_fond
+        self.couleur_raquette = self.configuration.couleur_raquette
+        self.couleur_balle = self.configuration.couleur_balle
+        self.couleur_texte = self.configuration.couleur_texte
+        
+        self.fps = self.configuration.fps
+        
+        self.epaisseur_ligne_centrale = self.configuration.epaisseur_ligne_centrale
+        self.hauteur_pointille = self.configuration.hauteur_pointille
+        self.espace_pointille = self.configuration.espace_pointille
+        
+        self.score_gagnant = self.configuration.score_gagnant
+        self.vitesse_balle_initiale = self.configuration.vitesse_balle_initiale
+        self.vitesse_balle_maximale = self.configuration.vitesse_balle_maximale
+        self.increment_vitesse_balle = self.configuration.increment_vitesse_balle
 
-        self.titre_fenetre = "Pong Devastator solo"
-        self.couleur_fond = (167, 180, 255)
-        self.couleur_raquette = (255, 255, 255)
-        self.couleur_balle = (255, 255, 255)
-        self.couleur_texte = (255, 255, 255)
-        self.fps = 60
-        self.epaisseur_ligne_centrale = 5
-        self.hauteur_pointille = 18
-        self.espace_pointille = 14
+        self.marge_ia = self.configuration.marge_ia
+        self.erreur_ia_maximale = self.configuration.erreur_ia_maximale
+
         self.horloge = pygame.time.Clock()
-        self.police_score = pygame.font.SysFont(None, 72)
-        self.police_message = pygame.font.SysFont(None, 24)
-        self.score_gagnant = 3
-        self.vitesse_balle_initiale = 5
-        self.vitesse_balle_maximale = 11
-        self.increment_vitesse_balle = 0.35
-        self.marge_ia = 10
-        self.erreur_ia_maximale = 35
+        self.police_score = pygame.font.SysFont("dejavusansmono", 72, bold=True)
+        self.police_message = pygame.font.SysFont("dejavusansmono", 26, bold=True)
+        self.anticrenelage_texte = True
+
 
     def initialiser_etat_partie(self):
         """Initialise l'état courant de la partie."""
@@ -63,12 +70,13 @@ class Jeu:
         self.score_ordinateur = 0
         self.gagnant = None
         self.erreur_ia = 0
-        self.etat_jeu = EtatJeu.MISE_AU_JEU
+        self.etat_jeu = EtatJeu.ECRAN_TITRE
 
     def reinitialiser_partie(self):
         """Redémarre une nouvelle partie."""
 
         self.initialiser_etat_partie()
+        self.etat_jeu = EtatJeu.MISE_AU_JEU
         self.balle.reinitialiser_position(Cote.GAUCHE)
 
     def charger_sons(self):
@@ -183,14 +191,45 @@ class Jeu:
                 self.epaisseur_ligne_centrale,
             )
 
+    def dessiner_ecran_titre(self):
+        """Dessine l'écran titre du jeu."""
+
+        self.fenetre.fill(self.couleur_fond)
+
+        texte_titre = self.police_score.render(
+            self.titre_fenetre,
+            self.anticrenelage_texte,
+            self.couleur_texte,
+        )
+        texte_instructions = self.police_message.render(
+            "Flèches HAUT/BAS pour déplacer la raquette\n" \
+            "ESC pour quitter\n" \
+            "ESPACE pour commencer\n",
+            self.anticrenelage_texte,
+            self.couleur_texte,
+        )
+
+        self.fenetre.blit(
+            texte_titre,
+            texte_titre.get_rect(
+                center=(self.largeur_fenetre // 2, self.hauteur_fenetre // 2 - 100)
+            ),
+        )
+        self.fenetre.blit(
+            texte_instructions,
+            texte_instructions.get_rect(
+                center=(self.largeur_fenetre // 2, self.hauteur_fenetre // 2)
+            ),
+        )
+
     def dessiner_score(self):
         """Dessine le score des joueurs"""
 
         texte_score_joueur = self.police_score.render(
-            str(self.score_joueur), True, self.couleur_texte
+            str(self.score_joueur), self.anticrenelage_texte, self.couleur_texte
         )
         texte_score_ordinateur = self.police_score.render(
-            str(self.score_ordinateur), True, self.couleur_texte
+            str(self.score_ordinateur), self.anticrenelage_texte, self.couleur_texte
         )
 
         self.fenetre.blit(
@@ -210,9 +249,8 @@ class Jeu:
         if self.etat_jeu == EtatJeu.MISE_AU_JEU:
             texte_mise_au_jeu = self.police_message.render(
                 "Appuyez sur ESPACE pour mettre la balle au jeu",
-                True,
+                self.anticrenelage_texte,
                 self.couleur_texte,
-                self.couleur_fond,
             )
             self.fenetre.blit(
                 texte_mise_au_jeu, 
@@ -226,9 +264,8 @@ class Jeu:
             if self.balle.cote_mise_au_jeu == Cote.GAUCHE:
                 texte_sens_mise_au_jeu = self.police_message.render(
                     "<<<",
-                    True,
+                    self.anticrenelage_texte,
                     self.couleur_texte,
-                    self.couleur_fond,
                 )
                 rect_sens_mise_au_jeu = texte_sens_mise_au_jeu.get_rect(
                     centery=int(self.balle.y)
@@ -239,9 +276,8 @@ class Jeu:
             else:
                 texte_sens_mise_au_jeu = self.police_message.render(
                     ">>>",
-                    True,
+                    self.anticrenelage_texte,
                     self.couleur_texte,
-                    self.couleur_fond,
                 )
                 rect_sens_mise_au_jeu = texte_sens_mise_au_jeu.get_rect(
                     centery=int(self.balle.y)
@@ -255,9 +291,8 @@ class Jeu:
         if self.etat_jeu == EtatJeu.PARTIE_TERMINEE:
             texte_gagnant = self.police_score.render(
                 "Joueur gagne!" if self.gagnant == Cote.GAUCHE else "Ordinateur gagne!",
-                True,
+                self.anticrenelage_texte,
                 self.couleur_texte,
-                self.couleur_fond,
             )
             self.fenetre.blit(
                 texte_gagnant,
@@ -307,10 +342,12 @@ class Jeu:
                 if evenement.key == pygame.K_ESCAPE:
                     self.etat_jeu = EtatJeu.EN_FERMETURE
                 elif evenement.key == pygame.K_SPACE:
-                    if self.etat_jeu == EtatJeu.PARTIE_TERMINEE:
-                        self.reinitialiser_partie()
+                    if self.etat_jeu == EtatJeu.ECRAN_TITRE:
+                        self.etat_jeu = EtatJeu.MISE_AU_JEU
                     elif self.etat_jeu == EtatJeu.MISE_AU_JEU:
                         self.etat_jeu = EtatJeu.EN_JEU
+                    elif self.etat_jeu == EtatJeu.PARTIE_TERMINEE:
+                        self.reinitialiser_partie()
 
     def mettre_a_jour(self):
         """Mise à jour de l'état du jeu"""
@@ -344,12 +381,15 @@ class Jeu:
     def dessiner(self):
         """Dessin des éléments du jeu"""
 
-        self.dessiner_terrain()
-        self.raquette_joueur.dessiner(self.fenetre)
-        self.raquette_ordinateur.dessiner(self.fenetre)
-        self.balle.dessiner(self.fenetre)
-        self.dessiner_score()
-        self.dessiner_messages()
+        if self.etat_jeu == EtatJeu.ECRAN_TITRE:
+            self.dessiner_ecran_titre()
+        else:
+            self.dessiner_terrain()
+            self.raquette_joueur.dessiner(self.fenetre)
+            self.raquette_ordinateur.dessiner(self.fenetre)
+            self.balle.dessiner(self.fenetre)
+            self.dessiner_score()
+            self.dessiner_messages()
 
         pygame.display.flip()
 
