@@ -41,18 +41,9 @@ class Balle:
         self.sons = sons
         self.image = image
 
-    def lancer_mise_au_jeu(self):
-        """Autorise la balle à partir."""
-
-        self.en_attente_mise_au_jeu = False
-
     def deplacer(self):
         """Déplace la balle selon sa vitesse."""
  
-        # Pas de déplacement tant que la balle n'est pas en jeu
-        if self.en_attente_mise_au_jeu:
-            return None
-
         self.x += self.vitesse_x
         self.y += self.vitesse_y
 

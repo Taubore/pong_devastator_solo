@@ -3,7 +3,7 @@ import sys
 import pygame
 from raquette import Raquette
 from balle import Balle
-from commun import Cote
+from commun import Cote, EtatJeu
 
 class Jeu:
     def __init__(self):
@@ -56,7 +56,13 @@ class Jeu:
         self.score_joueur = 0
         self.score_ordinateur = 0
         self.gagnant = None
-        self.en_cours = True
+        self.etat_jeu = EtatJeu.MISE_AU_JEU
+
+    def reinitialiser_partie(self):
+        """Redémarre une nouvelle partie."""
+
+        self.initialiser_etat_partie()
+        self.balle.reinitialiser_position(Cote.GAUCHE)
 
     def charger_sons(self):
         """Charge les sons utilisés par le jeu."""
@@ -115,59 +121,6 @@ class Jeu:
 
         self.balle.reinitialiser_position(Cote.GAUCHE)
 
-    def gerer_evenements(self):
-        """Gestion des événements utilisateur"""
-
-        for evenement in pygame.event.get():
-            if evenement.type == pygame.QUIT:
-                self.en_cours = False
-
-            elif evenement.type == pygame.KEYDOWN:
-                if evenement.key == pygame.K_ESCAPE:
-                    self.en_cours = False
-                elif evenement.key == pygame.K_SPACE:
-                    if self.gagnant is not None:
-                        self.reinitialiser_partie()
-                    elif self.balle.en_attente_mise_au_jeu:
-                        self.balle.lancer_mise_au_jeu()
-
-    def mettre_a_jour(self):
-        """Mise à jour de l'état du jeu"""
-
-        # On ne met pas à jour si on a un gagnant
-        if self.gagnant is not None:
-            return
-
-        direction_joueur = 0
-        touches = pygame.key.get_pressed()
-
-        if touches[pygame.K_UP] and not touches[pygame.K_DOWN]:
-            direction_joueur = -1
-        elif touches[pygame.K_DOWN] and not touches[pygame.K_UP]:
-            direction_joueur = 1
-
-        self.raquette_joueur.deplacer(direction_joueur)
-        self.mettre_a_jour_ia_ordinateur()
-        
-        sortie_ecran = self.balle.deplacer()
-
-        # Si la balle n'est pas sortie de l'écran, on gère les collisions. Sinon, on met
-        # à jour le score et on remet la balle en jeu si pas de gagnant. 
-        if sortie_ecran is None:
-            self.gerer_collisions()
-        else:
-            if sortie_ecran == Cote.GAUCHE:
-                self.score_ordinateur += 1
-                if self.score_ordinateur >= self.score_gagnant:
-                    self.gagnant = Cote.DROITE
-            elif sortie_ecran == Cote.DROITE:
-                self.score_joueur += 1
-                if self.score_joueur >= self.score_gagnant:
-                    self.gagnant = Cote.GAUCHE
-            
-            if self.gagnant is None:
-                self.balle.reinitialiser_position(sortie_ecran)
-
     def gerer_collisions(self):
         """Gère l'ensemble des collisions."""   
         
@@ -205,18 +158,6 @@ class Jeu:
                 direction_ordinateur = -1
 
         self.raquette_ordinateur.deplacer(direction_ordinateur)
-
-    def dessiner(self):
-        """Dessin des éléments du jeu"""
-
-        self.dessiner_terrain()
-        self.raquette_joueur.dessiner(self.fenetre)
-        self.raquette_ordinateur.dessiner(self.fenetre)
-        self.balle.dessiner(self.fenetre)
-        self.dessiner_score()
-        self.dessiner_messages()
-
-        pygame.display.flip()
 
     def dessiner_terrain(self):
         """Dessine le terrain de jeu"""
@@ -261,7 +202,7 @@ class Jeu:
 
         # Si en attente de mise au jeu, on affiche un message en bas au centre pour
         # inviter à appuyer sur ESPACE et démarrer l'échange. 
-        if self.balle.en_attente_mise_au_jeu:
+        if self.etat_jeu == EtatJeu.MISE_AU_JEU:
             texte_mise_au_jeu = self.police_message.render(
                 "Appuyez sur ESPACE pour mettre la balle au jeu",
                 True,
@@ -306,7 +247,7 @@ class Jeu:
 
             self.fenetre.blit(texte_sens_mise_au_jeu, rect_sens_mise_au_jeu)
 
-        if self.gagnant is not None:
+        if self.etat_jeu == EtatJeu.PARTIE_TERMINEE:
             texte_gagnant = self.police_score.render(
                 "Joueur gagne!" if self.gagnant == Cote.GAUCHE else "Ordinateur gagne!",
                 True,
@@ -321,16 +262,89 @@ class Jeu:
                     ),
             )
 
-    def reinitialiser_partie(self):
-        """Redémarre une nouvelle partie."""
+    def traiter_point_marque(self, sortie_ecran):
+        """Met à jour le score après une sortie de la balle."""
 
-        self.initialiser_etat_partie()
-        self.balle.reinitialiser_position(Cote.GAUCHE)
+        if sortie_ecran == Cote.GAUCHE:
+            self.score_ordinateur += 1
+
+            if self.score_ordinateur >= self.score_gagnant:
+                self.gagnant = Cote.DROITE
+                self.etat_jeu = EtatJeu.PARTIE_TERMINEE
+                return
+
+        elif sortie_ecran == Cote.DROITE:
+            self.score_joueur += 1
+            if self.score_joueur >= self.score_gagnant:
+                self.gagnant = Cote.GAUCHE
+                self.etat_jeu = EtatJeu.PARTIE_TERMINEE
+                return
+        
+        self.balle.reinitialiser_position(sortie_ecran)
+        self.etat_jeu = EtatJeu.MISE_AU_JEU
+
+
+    def gerer_evenements(self):
+        """Gestion des événements utilisateur"""
+
+        for evenement in pygame.event.get():
+            if evenement.type == pygame.QUIT:
+                self.etat_jeu = EtatJeu.EN_FERMETURE
+
+            elif evenement.type == pygame.KEYDOWN:
+                if evenement.key == pygame.K_ESCAPE:
+                    self.etat_jeu = EtatJeu.EN_FERMETURE
+                elif evenement.key == pygame.K_SPACE:
+                    if self.etat_jeu == EtatJeu.PARTIE_TERMINEE:
+                        self.reinitialiser_partie()
+                    elif self.etat_jeu == EtatJeu.MISE_AU_JEU:
+                        self.etat_jeu = EtatJeu.EN_JEU
+
+    def mettre_a_jour(self):
+        """Mise à jour de l'état du jeu"""
+
+        # On ne met pas à jour si la partie n'est pas en cours.
+        #if self.etat_jeu != EtatJeu.EN_JEU:
+        #    return
+
+        direction_joueur = 0
+        touches = pygame.key.get_pressed()
+
+        if touches[pygame.K_UP] and not touches[pygame.K_DOWN]:
+            direction_joueur = -1
+        elif touches[pygame.K_DOWN] and not touches[pygame.K_UP]:
+            direction_joueur = 1
+
+        self.raquette_joueur.deplacer(direction_joueur)
+        self.mettre_a_jour_ia_ordinateur()
+        
+        sortie_ecran = None
+        if self.etat_jeu == EtatJeu.EN_JEU:
+            sortie_ecran = self.balle.deplacer()
+
+        # Si la balle n'est pas sortie de l'écran, on gère les collisions. Sinon, on met
+        # à jour le score et on remet la balle en jeu si pas de gagnant. 
+        if sortie_ecran is None:
+            self.gerer_collisions()
+        else:
+            self.traiter_point_marque(sortie_ecran)
+
+    def dessiner(self):
+        """Dessin des éléments du jeu"""
+
+        self.dessiner_terrain()
+        self.raquette_joueur.dessiner(self.fenetre)
+        self.raquette_ordinateur.dessiner(self.fenetre)
+        self.balle.dessiner(self.fenetre)
+        self.dessiner_score()
+        self.dessiner_messages()
+
+        pygame.display.flip()
 
     def executer(self):
         """Boucle principale du jeu"""
 
-        while self.en_cours:
+        while self.etat_jeu is not EtatJeu.EN_FERMETURE:
             self.gerer_evenements()
             self.mettre_a_jour()
             self.dessiner()
